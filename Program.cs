@@ -95,6 +95,38 @@ namespace Program
             }
         }
         
+        static List<string> alreadyShown = new List<string>();
+        
+        static void Messages(Task task) {
+            if (alreadyShown.Contains(task.Name)) return;
+            if (task.TaskStatus == Status.Completed) return; // return if task already has a message or is completed
+
+            if (task.DueDate < DateTime.Now && task.Priority == PriorityLevel.High) { // messages are prioritized based on time left and priority.
+                Console.WriteLine($"You have an important overdue task: {task.Name} due on {task.DueDate}, you're {(((DateTime.Now - task.DueDate).Days > 0) ? $"{(DateTime.Now - task.DueDate).Days} days" : $"{(DateTime.Now - task.DueDate).Hours} hours")} overdue.");
+                alreadyShown.Add(task.Name);
+            }
+            else if (task.DueDate < DateTime.Now) {
+                Console.WriteLine($"You have an overdue task: {task.Name} due on {task.DueDate}, you're {(((DateTime.Now - task.DueDate).Days > 0) ? $"{(DateTime.Now - task.DueDate).Days} days" : $"{(DateTime.Now - task.DueDate).Hours} hours")} overdue.");
+                alreadyShown.Add(task.Name);
+            }
+            else if (task.DueDate - DateTime.Now < TimeSpan.FromDays(2) && task.Priority == PriorityLevel.High) {
+                Console.WriteLine($"You have an important due task: {task.Name} due on {task.DueDate}, you have {(((task.DueDate - DateTime.Now).Days > 0) ? $"{(task.DueDate - DateTime.Now).Days} days" : $"{(task.DueDate - DateTime.Now).Hours} hours")} left.");
+                alreadyShown.Add(task.Name);
+            }
+            else if (task.DueDate - DateTime.Now < TimeSpan.FromDays(2)) {
+                Console.WriteLine($"You have a due task: {task.Name} due on {task.DueDate}, you have {(((task.DueDate - DateTime.Now).Days > 0) ? $"{(task.DueDate - DateTime.Now).Days} days" : $"{(task.DueDate - DateTime.Now).Hours} hours")} left.");
+                alreadyShown.Add(task.Name);
+            }
+            else if (task.Priority == PriorityLevel.High) {
+                Console.WriteLine($"You have an uncompleted important task: {task.Name} due on {task.DueDate}, you have {(((task.DueDate - DateTime.Now).Days > 0) ? $"{(task.DueDate - DateTime.Now).Days} days" : $"{(task.DueDate - DateTime.Now).Hours} hours")} left.");
+                alreadyShown.Add(task.Name);
+            }
+            else if (task.DueDate - DateTime.Now < TimeSpan.FromDays(7)) {
+                Console.WriteLine($"You have an upcoming task: {task.Name} due on {task.DueDate}, you have {(((task.DueDate - DateTime.Now).Days > 0) ? $"{(task.DueDate - DateTime.Now).Days} days" : $"{(task.DueDate - DateTime.Now).Hours} hours")} left.");
+                alreadyShown.Add(task.Name);
+            }
+        }
+        
         static void Main(string[] args)
         {
             foreach (var cmd in cmdsorig)
@@ -106,6 +138,9 @@ namespace Program
                 tags.Add(tag);
             }
             ImportData();
+            foreach (KeyValuePair<int, Task> kvp in Tasks) {
+                Messages(kvp.Value);
+            }
             PrintCommands();
             while (true)
             {
