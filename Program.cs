@@ -138,9 +138,11 @@ namespace Program
                 tags.Add(tag);
             }
             ImportData();
+            Console.WriteLine("----- Messages -----");
             foreach (KeyValuePair<int, Task> kvp in Tasks) {
                 Messages(kvp.Value);
             }
+            Console.WriteLine("----- End of Messages -----");
             PrintCommands();
             while (true)
             {
