@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.X509Certificates;
+using System.IO;
 using Microsoft.VisualBasic;
 
 namespace Program
@@ -25,7 +25,7 @@ namespace Program
     {
         static HashSet<string> cmds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         static string[] cmdsorig = ["Help", "View", "Add", "Update", "Remove"];
-        static string[] dateFormats = ["d/M/yyyy", "dd/M/yyyy", "d/MM/yyyy", "dd/MM/yyyy"];
+        static string[] dateFormats = ["d/M/yyyy", "dd/M/yyyy", "d/MM/yyyy", "dd/MM/yyyy", "d/M/yyyy HH:mm:ss", "dd/M/yyyy HH:mm:ss", "d/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm:ss"];
         static int tasknum = 0;
         static Dictionary<int, Task> Tasks = new Dictionary<int, Task>(); 
         static void PrintCommands()
@@ -36,6 +36,52 @@ namespace Program
                 Console.WriteLine(cmd);
             }
         }
+
+        static void ExportData()
+        {
+            File.WriteAllText("Data.txt", "");
+            foreach (KeyValuePair<int, Task> kvp in Tasks)
+            {
+                var task = kvp.Value;
+                File.AppendAllText("Data.txt", $"Index: {kvp.Key}\nName: {task.Name}\nDescription: {task.Description}\nStart Date: {task.StartDate}\nDue Date: {task.DueDate}\nPriority Level: {task.Priority}\nStatus: {task.TaskStatus}\nAssignee: {task.Assignee}\n\n");
+            }
+        }
+
+        static void ImportData()
+        {
+            string data = File.ReadAllText("Data.txt");
+            string[] tasks = data.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string task in tasks)
+            {
+                string[] lines = task.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                string indexVar = lines[0].Split("Index: ")[1].Trim();
+                int indexVarx = Convert.ToInt32(indexVar);
+                string nameVar = lines[1].Split("Name: ")[1].Trim();
+                string descVar = lines[2].Split("Description: ")[1].Trim();
+                string sdVar = lines[3].Split("Start Date: ")[1].Trim();
+                string ddVar = lines[4].Split("Due Date: ")[1].Trim();
+                DateTime sdVarx = DateTime.ParseExact(sdVar, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
+                DateTime ddVarx = DateTime.ParseExact(ddVar, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
+                string prioVar = lines[5].Split("Priority Level: ")[1].Trim();
+                string statusVar = lines[6].Split("Status: ")[1].Trim();
+                PriorityLevel prioVarx;
+                Status statusVarx;
+                Enum.TryParse(prioVar, true, out prioVarx);
+                Enum.TryParse(statusVar, true, out statusVarx);
+                string assigneeVar = lines[7].Split("Assignee: ")[1].Trim();
+
+                Task t = new Task();
+                t.Name = nameVar;
+                t.Description = descVar;
+                t.StartDate = sdVarx;
+                t.DueDate = ddVarx;
+                t.Priority = prioVarx;
+                t.TaskStatus = statusVarx;
+                t.Assignee = assigneeVar;
+                Tasks.Add(indexVarx, t);
+                tasknum++;
+            }
+        }
         
         static void Main(string[] args)
         {
@@ -43,6 +89,7 @@ namespace Program
             {
                 cmds.Add(cmd);
             }
+            ImportData();
             PrintCommands();
             while (true)
             {
@@ -69,7 +116,7 @@ namespace Program
                             string nameInput = Console.ReadLine();
                             Console.WriteLine("Enter the description of the task: ");
                             string descriptionInput = Console.ReadLine();
-                            Console.WriteLine("Enter the start date (format: day/month/year) or leave empty for today:");
+                            Console.WriteLine("Enter the start date (format: day/month/year hour:minute:second) or leave empty for today:");
                             string startDateInput = Console.ReadLine();
                             DateTime startDateInput1;
                             if (string.IsNullOrWhiteSpace(startDateInput))
@@ -80,7 +127,7 @@ namespace Program
                             {
                                 startDateInput1 = DateTime.ParseExact(startDateInput, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
                             }
-                            Console.WriteLine("Enter the due date (format: day/month/year) or leave empty for a week ahead of today: ");
+                            Console.WriteLine("Enter the due date (format: day/month/year hour:minute:second) or leave empty for a week ahead of today: ");
                             string dueDateInput = Console.ReadLine();
                             DateTime dueDateInput1;
                             if (string.IsNullOrWhiteSpace(dueDateInput))
@@ -111,6 +158,7 @@ namespace Program
                             tasknum++;
                             break;
                         }
+                        ExportData();
                         break;
 
                     case "update":
@@ -238,6 +286,7 @@ namespace Program
                         {
                             Console.WriteLine($"Error: No task with index {indexInput2} has been found.");
                         }
+                        ExportData();
                         break;
 
                     case "remove":
@@ -259,6 +308,7 @@ namespace Program
                         {
                             Console.WriteLine($"Error: No task with index {indexInput} has been found.");
                         }
+                        ExportData();
                         break;
 
                     default:
