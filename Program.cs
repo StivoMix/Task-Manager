@@ -24,10 +24,12 @@ namespace Program
     class App
     {
         static HashSet<string> cmds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        static HashSet<string> tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         static string[] cmdsorig = ["Help", "View", "Add", "Update", "Remove"];
+        static string[] tagsorig = ["Work", "Personal", "Urgent", "Routine", "Event"];
         static string[] dateFormats = ["d/M/yyyy", "dd/M/yyyy", "d/MM/yyyy", "dd/MM/yyyy", "d/M/yyyy HH:mm:ss", "dd/M/yyyy HH:mm:ss", "d/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm:ss"];
         static int tasknum = 0;
-        static Dictionary<int, Task> Tasks = new Dictionary<int, Task>(); 
+        static Dictionary<int, Task> Tasks = new Dictionary<int, Task>();
         static void PrintCommands()
         {
             Console.WriteLine("Current available commands:");
@@ -43,42 +45,53 @@ namespace Program
             foreach (KeyValuePair<int, Task> kvp in Tasks)
             {
                 var task = kvp.Value;
-                File.AppendAllText("Data.txt", $"Index: {kvp.Key}\nName: {task.Name}\nDescription: {task.Description}\nStart Date: {task.StartDate}\nDue Date: {task.DueDate}\nPriority Level: {task.Priority}\nStatus: {task.TaskStatus}\nAssignee: {task.Assignee}\n\n");
+                File.AppendAllText("Data.txt", $"Index: {kvp.Key}\nName: {task.Name}\nDescription: {task.Description}\nStart Date: {task.StartDate}\nDue Date: {task.DueDate}\nPriority Level: {task.Priority}\nStatus: {task.TaskStatus}\nAssignee: {task.Assignee}\nTags: {string.Join(", ", task.Tags)}\n\n");
             }
         }
 
         static void ImportData()
         {
-            string data = File.ReadAllText("Data.txt");
-            string[] tasks = data.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string task in tasks)
+            if (File.Exists("Data.txt"))
             {
-                string[] lines = task.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                int indexVar = Convert.ToInt32(lines[0].Split("Index: ")[1].Trim());
-                string nameVar = lines[1].Split("Name: ")[1].Trim();
-                string descVar = lines[2].Split("Description: ")[1].Trim();
-                string sdVar = lines[3].Split("Start Date: ")[1].Trim();
-                string ddVar = lines[4].Split("Due Date: ")[1].Trim();
-                DateTime sdVarx = DateTime.ParseExact(sdVar, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
-                DateTime ddVarx = DateTime.ParseExact(ddVar, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
-                string prioVar = lines[5].Split("Priority Level: ")[1].Trim();
-                string statusVar = lines[6].Split("Status: ")[1].Trim();
-                PriorityLevel prioVarx;
-                Status statusVarx;
-                Enum.TryParse(prioVar, true, out prioVarx);
-                Enum.TryParse(statusVar, true, out statusVarx);
-                string assigneeVar = lines[7].Split("Assignee: ")[1].Trim();
+                string data = File.ReadAllText("Data.txt");
+                string[] tasks = data.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string task in tasks)
+                {
+                    string[] lines = task.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    int indexVar = Convert.ToInt32(lines[0].Split("Index: ")[1].Trim());
+                    string nameVar = lines[1].Split("Name: ")[1].Trim();
+                    string descVar = lines[2].Split("Description: ")[1].Trim();
+                    string sdVar = lines[3].Split("Start Date: ")[1].Trim();
+                    string ddVar = lines[4].Split("Due Date: ")[1].Trim();
+                    DateTime sdVarx = DateTime.ParseExact(sdVar, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
+                    DateTime ddVarx = DateTime.ParseExact(ddVar, dateFormats, System.Globalization.CultureInfo.InvariantCulture);
+                    string prioVar = lines[5].Split("Priority Level: ")[1].Trim();
+                    string statusVar = lines[6].Split("Status: ")[1].Trim();
+                    PriorityLevel prioVarx;
+                    Status statusVarx;
+                    Enum.TryParse(prioVar, true, out prioVarx);
+                    Enum.TryParse(statusVar, true, out statusVarx);
+                    string assigneeVar = lines[7].Split("Assignee: ")[1].Trim();
+                    string[] tagsVar = lines[8].Split("Tags: ")[1].Trim().Split(", ");
+                    List<string> tagsVarx = new List<string>();
+                    foreach (var tag in tagsVar)
+                    {
+                        string trmdTag = tag.Trim();
+                        tagsVarx.Add(trmdTag);
+                    }
 
-                Task t = new Task();
-                t.Name = nameVar;
-                t.Description = descVar;
-                t.StartDate = sdVarx;
-                t.DueDate = ddVarx;
-                t.Priority = prioVarx;
-                t.TaskStatus = statusVarx;
-                t.Assignee = assigneeVar;
-                Tasks.Add(indexVar, t);
-                tasknum++;
+                    Task t = new Task();
+                    t.Name = nameVar;
+                    t.Description = descVar;
+                    t.StartDate = sdVarx;
+                    t.DueDate = ddVarx;
+                    t.Priority = prioVarx;
+                    t.TaskStatus = statusVarx;
+                    t.Assignee = assigneeVar;
+                    t.Tags = tagsVarx;
+                    Tasks.Add(indexVar, t);
+                    tasknum++;
+                }
             }
         }
         
@@ -87,6 +100,10 @@ namespace Program
             foreach (var cmd in cmdsorig)
             {
                 cmds.Add(cmd);
+            }
+            foreach (var tag in tagsorig)
+            {
+                tags.Add(tag);
             }
             ImportData();
             PrintCommands();
@@ -104,7 +121,7 @@ namespace Program
                         foreach (KeyValuePair<int, Task> kvp in Tasks)
                         {
                             var task = kvp.Value;
-                            Console.WriteLine($"\nIndex: {kvp.Key}\nName: {task.Name}\nDescription: {task.Description}\nStart Date: {task.StartDate}\nDue Date: {task.DueDate}\nPriority Level: {task.Priority}\nStatus: {task.TaskStatus}\nAssignee: {task.Assignee}");
+                            Console.WriteLine($"\nIndex: {kvp.Key}\nName: {task.Name}\nDescription: {task.Description}\nStart Date: {task.StartDate}\nDue Date: {task.DueDate}\nPriority Level: {task.Priority}\nStatus: {task.TaskStatus}\nAssignee: {task.Assignee}\nTags: {string.Join(", ", task.Tags)}");
                         }
                         break;
 
@@ -141,8 +158,40 @@ namespace Program
                             string priorityLevelInput = Console.ReadLine();
                             PriorityLevel priorityLevelInput1;
                             Enum.TryParse(priorityLevelInput, true, out priorityLevelInput1);
-                            Console.WriteLine("Enter the task assignee's name: ");
+                            Console.WriteLine("Enter the task assignee's name (optional): ");
                             string assigneeInput = Console.ReadLine();
+                            Console.WriteLine("Enter the tags you want in your task (optional, format: tag1, tag2...): ");
+                            Console.Write("Valid Tags: ");
+                            foreach (var tag in tags)
+                            {
+                                if (tag != tags.Last())
+                                {
+                                    Console.Write($"{tag}, ");
+                                }
+                                else
+                                {
+                                    Console.Write($"{tag}.\n");
+                                }
+                            }
+                            string tagsInput = Console.ReadLine();
+                            string[] unfilteredTags = tagsInput.Trim().Split(",");
+                            List<string> taskTags = new List<string>();
+                            if (string.IsNullOrWhiteSpace(tagsInput))
+                            {
+                                taskTags.Add("None");
+                            }
+                            else
+                            {
+                                foreach (var tag in unfilteredTags)
+                                {
+                                    var trimmedTag = tag.Trim().ToLower();
+                                    string edittedTag = Char.ToUpper(trimmedTag[0]) + trimmedTag.Substring(1);
+                                    if (tags.Contains(edittedTag) && !taskTags.Contains(edittedTag))
+                                    {
+                                        taskTags.Add(edittedTag);
+                                    }
+                                }
+                            }
 
                             Task ntsk = new Task();
                             ntsk.Name = nameInput;
@@ -152,7 +201,8 @@ namespace Program
                             ntsk.Priority = priorityLevelInput1;
                             ntsk.TaskStatus = Status.To_Do;
                             ntsk.Assignee = assigneeInput;
-                            Console.WriteLine($"----- Task succesfully created -----\nIndex: {tasknum}\nName: {ntsk.Name}\nDescription: {ntsk.Description}\nStart Date: {ntsk.StartDate}\nDue Date: {ntsk.DueDate}\nPriority Level: {ntsk.Priority}\nStatus: {ntsk.TaskStatus}\nAssignee: {ntsk.Assignee}");
+                            ntsk.Tags = taskTags;
+                            Console.WriteLine($"----- Task succesfully created -----\nIndex: {tasknum}\nName: {ntsk.Name}\nDescription: {ntsk.Description}\nStart Date: {ntsk.StartDate}\nDue Date: {ntsk.DueDate}\nPriority Level: {ntsk.Priority}\nStatus: {ntsk.TaskStatus}\nAssignee: {ntsk.Assignee}\nTags: {string.Join(", ", ntsk.Tags)}");
                             Tasks.Add(tasknum, ntsk);
                             tasknum++;
                             break;
@@ -165,7 +215,7 @@ namespace Program
                         int indexInput2 = Convert.ToInt32(Console.ReadLine());
                         if (Tasks.ContainsKey(indexInput2))
                         {
-                            string[] validList = ["name", "description", "startdate", "duedate", "priority", "taskstatus", "assignee"];
+                            string[] validList = ["name", "description", "startdate", "duedate", "priority", "taskstatus", "assignee", "tags"];
                             Console.WriteLine($"Valid Updates: {string.Join(", ", validList)}");
                             Console.WriteLine($"Enter the fields you'd like to update in task {indexInput2} (format: field1, field2...): ");
                             string updatesInput = Console.ReadLine().ToLower();
@@ -236,6 +286,29 @@ namespace Program
                                             oldValues.Add(capitalizedItem, task.Assignee);
                                             task.Assignee = valueInput;
                                             break;
+
+                                        case "tags":
+                                            oldValues.Add(capitalizedItem, string.Join(", ", task.Tags));
+                                            string[] unfilteredTags = valueInput.Trim().Split(",");
+                                            List<string> taskTags = new List<string>();
+                                            if (string.IsNullOrWhiteSpace(valueInput))
+                                            {
+                                                taskTags.Add("None");
+                                            }
+                                            else
+                                            {
+                                                foreach (var tag in unfilteredTags)
+                                                {
+                                                    var trimmedTag = tag.Trim().ToLower();
+                                                    string edittedTag = Char.ToUpper(trimmedTag[0]) + trimmedTag.Substring(1);
+                                                    if (tags.Contains(edittedTag) && !taskTags.Contains(edittedTag))
+                                                    {
+                                                        taskTags.Add(edittedTag);
+                                                    }
+                                                }
+                                            }
+                                            task.Tags = taskTags;
+                                            break;
                                     }
                                 }
                                 else
@@ -276,6 +349,10 @@ namespace Program
 
                                     case "assignee":
                                         newValue = task.Assignee;
+                                        break;
+                                        
+                                    case "tags":
+                                        newValue = string.Join(", ", task.Tags);
                                         break;
                                 }
                                 Console.WriteLine($"{kvp.Key}: {kvp.Value} => {newValue}");
