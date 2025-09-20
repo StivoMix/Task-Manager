@@ -54,8 +54,7 @@ namespace Program
             foreach (string task in tasks)
             {
                 string[] lines = task.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                string indexVar = lines[0].Split("Index: ")[1].Trim();
-                int indexVarx = Convert.ToInt32(indexVar);
+                int indexVar = Convert.ToInt32(lines[0].Split("Index: ")[1].Trim());
                 string nameVar = lines[1].Split("Name: ")[1].Trim();
                 string descVar = lines[2].Split("Description: ")[1].Trim();
                 string sdVar = lines[3].Split("Start Date: ")[1].Trim();
@@ -78,7 +77,7 @@ namespace Program
                 t.Priority = prioVarx;
                 t.TaskStatus = statusVarx;
                 t.Assignee = assigneeVar;
-                Tasks.Add(indexVarx, t);
+                Tasks.Add(indexVar, t);
                 tasknum++;
             }
         }
