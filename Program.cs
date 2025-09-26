@@ -25,7 +25,7 @@ namespace Program
     {
         static HashSet<string> cmds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         static HashSet<string> tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        static string[] cmdsorig = ["Help", "View", "Add", "Update", "Remove"];
+        static string[] cmdsorig = ["Help", "View", "Add", "Update", "Remove", "Complete"];
         static string[] tagsorig = ["Work", "Personal", "Urgent", "Routine", "Event"];
         static string[] dateFormats = ["d/M/yyyy", "dd/M/yyyy", "d/MM/yyyy", "dd/MM/yyyy", "d/M/yyyy HH:mm:ss", "dd/M/yyyy HH:mm:ss", "d/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm:ss"];
         static int tasknum = 0;
@@ -420,6 +420,21 @@ namespace Program
                         else
                         {
                             Console.WriteLine($"Error: No task with index {indexInput} has been found.");
+                        }
+                        ExportData();
+                        break;
+
+                    case "complete":
+                        Console.WriteLine("Enter the index of the task you wish to remove: ");
+                        int indexInput1 = Convert.ToInt32(Console.ReadLine());
+                        if (Tasks.ContainsKey(indexInput1))
+                        {
+                            Tasks[indexInput1].TaskStatus = Status.Completed;
+                            Console.WriteLine($"Task {indexInput1} succesfully completed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Error: No task with index {indexInput1} has been found.");   
                         }
                         ExportData();
                         break;
